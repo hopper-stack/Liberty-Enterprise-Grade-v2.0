@@ -1,0 +1,59 @@
+
+=================================
+         BUILD SEQUENCE
+=================================
+
+1. Build the servers based on the configuration-guide.xls found on the hopper~stack website
+   in the downloads tab.
+2. Ensure 1-9 compute nodes are created
+3. All VMs/Servers should be built with a minimum of "Infrastructure Server group"
+4. Add all additional networks and storage by design.
+5. We recommend only the compute nodes should be physical, all other servers can be created
+   as virtual machines until performance becomes an issue.
+
+	[see http://www.hopper-stack.co.uk]
+
+Ensure an NTP server exists or designate HAproxy#1 as the NTP server
+when modifying the variables file
+
+	[see http://www.hopper-stack.co.uk on how to create an NTP server on CentOS]
+
+
+ Login to a buildsvr server to hold the scripts
+------------------------------------------------
+We recommend a separate build-server but otherwise please choose the repository server
+for hosting the scripts
+
+# mkdir /run-scripts
+# cd /run-scripts
+# tar xf /tmp/hopper-enterprise-v2.0.tar
+
+Modify variables file
+# vim variables
+
+Create the configuration files
+# ./create-files
+
+Distribute files [the root password for all servers will be prompted for]
+# ./distribute-files
+
+
+ Login to patch-server node
+----------------------------
+Run script
+# ./patch-server
+
+
+ Login to Controller#1 node
+----------------------------
+Run script
+# ./install-hopper
+
+After controller#1 reboots, log back into the controller#1
+Re-run script
+# ./install-hopper
+
+When complete verify the build
+# ./verify-hopper
+
+

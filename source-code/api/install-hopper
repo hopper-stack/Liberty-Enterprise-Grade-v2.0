@@ -1,0 +1,528 @@
+#!/bin/bash
+
+:<<'hopper-stack-notice'
+
+Copyright 2015 Hopper-Stack
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+hopper-stack-notice
+
+# +------------------------------------------+
+# | VARIABLES                                |
+# +------------------------------------------+
+if [[ ! -f profile && ! -f variables ]]; then
+   echo
+   echo " +-------------------------------------------+"
+   echo " |  No profile file found in this directory  |"
+   echo " +-------------------------------------------+"
+   echo
+   exit
+else
+   source profile
+   source variables
+fi
+
+wget http://$FILESERVER/$HTTPFILES/figlet/figlet-2.2.2-1.el6.rf.x86_64.rpm
+rpm -Uvh figlet-2.2.2-1.el6.rf.x86_64.rpm
+rm -rf figlet-2.2.2-1.el6.rf.x86_64.rpm
+DEBUG=False
+
+# +------------------------------------------+
+# | PATCH AND REBOOT                         |
+# +------------------------------------------+
+if [ ! -f /etc/yum.repos.d/hopper-stack.repo ]; then
+   clear
+   echo
+   echo " +----------------------------------+ "
+   echo " |  Patching and rebooting servers  | "
+   echo " +----------------------------------+ "
+   rm -f /tmp/patching.log
+
+   # squid
+   if [ x$ENABLE_SQUID == xTrue ]; then
+      echo $SQUIDDSERVERIP 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$SQUIDDSERVERIP \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   fi
+
+   # haproxy
+   echo $HAPROXY1IP 
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY1IP \
+   'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   echo $HAPROXY2IP 
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY2IP \
+   'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+
+   # DNS and LDAP
+   if [[ x$ENABLE_DNS == xTrue || x$ENABLE_LDAP == xTrue ]]; then
+      echo $DNSSERVERIP 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$DNSSERVERIP \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   fi
+
+   # backup
+   if [ x$ENABLE_AMANDA == xTrue ]; then
+      echo $BCKUPSERVER 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$BCKUPSERVER \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   fi
+
+   # swift
+   declare -a arr1=(`cat variables \
+   | grep ^STORAGE[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      echo $i 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   done
+
+   # nova
+   declare -a arr1=(`cat variables \
+   | grep ^COMPUTE[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      echo $i 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   done
+
+   # neutron
+   declare -a arr1=(`cat variables \
+   | grep ^NETWORK[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      echo $i 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   done
+
+   # monitoring
+   if [ x$ENABLE_NAGIOS == xTrue ]; then
+      echo $NAGIOSSERVER 
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$NAGIOSSERVER \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   fi
+
+   # logstash
+   if [ x$ENABLE_LOGSTASH == xTrue ]; then
+      echo $LOGSTASHIP
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$LOGSTASHIP \
+      'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1' &
+   fi
+
+   # controller
+   echo $CONTRL3IP 
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$CONTRL3IP \
+   'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1'
+   echo $CONTRL2IP 
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$CONTRL2IP \
+   'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1'
+   echo $CONTRL1IP 
+   echo
+   echo " +-----------------------------------------------+"
+   echo " |  Patching and rebooting this controller node  |"
+   echo " |  Please wait ...                              |"
+   echo " |                                               |"
+   echo " |  When complete - log back in and re-run       |"
+   echo " |                                               |"
+   echo " |      ./install-hopper                         |"
+   echo " +-----------------------------------------------+"
+   echo
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$CONTRL1IP \
+   'cd /install_dir; ./patch-client >> /tmp/patching.log 2>&1'
+fi
+
+# +------------------------------------------+
+# | INSTALLATION                             |
+# +------------------------------------------+
+# NTP
+if [ x$NTP == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  NTP                                          |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $HAPROXY1IP                         "
+   echo
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY1IP \
+   'cd /install_dir; ./ntpserver'
+fi
+
+# DNS
+if [ x$ENABLE_DNS == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  DNS                                          |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $DNSSERVERIP                        "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$DNSSERVERIP \
+   'cd /install_dir; ./dns-server'
+
+   # LDAP
+   if [ x$ENABLE_LDAP == xTrue ]; then
+      echo " +-----------------------------------------------+"
+      echo " |  LDAP                                         |"
+      echo " +-----------------------------------------------+"
+      echo "     Server - $DNSSERVERIP                        "
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$DNSSERVERIP \
+      'cd /install_dir; ./ldap-server'
+   fi
+fi
+
+#  squid
+if [ x$ENABLE_SQUID == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  SQUID                                        |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $SQUIDDSERVERIP                     "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$SQUIDDSERVERIP \
+   'cd /install_dir; ./squid-server'
+fi
+
+# gluster
+if [ x$ENABLE_GLUSTER == xTrue ]; then
+   declare -a arr1=(`cat variables \
+   | grep ^OTHER_GLUSTER_NODE | cut -f2 -d$`)
+
+   FIRST_COMPUTE_NODE=`cat variables | grep ^FIRST_GLUSTER_NODE | cut -f2 -d$ | sed s/STORAGE/UTE/`
+   FIRST_COMPUTE_NODE=`cat variables | grep ^$FIRST_COMPUTE_NODE | cut -f2 -d=`
+
+   for i in ${arr1[@]}; do
+      node=`echo ^$i | cut -f4 -d. | cut -f2 -dE`
+      node=COMPUTE${node}
+      node=`cat variables | grep ^$node | cut -f2 -d=`
+      echo " +-----------------------------------------------+"
+      echo " |  GLUSTER                                      |"
+      echo " +-----------------------------------------------+"
+      echo "     Server - $node                               "
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$node \
+      'cd /install_dir; ./add-gluster'
+   done
+   echo " +-----------------------------------------------+"
+   echo " |  GLUSTER #1                                   |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $FIRST_COMPUTE_NODE                 "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$FIRST_COMPUTE_NODE \
+   'cd /install_dir; ./add-gluster; ./gluster-volume'
+fi
+
+# logstash
+if [ x$ENABLE_LOGSTASH == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  LOGSTASH                                     |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $LOGSTASHIP                       "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$LOGSTASHIP \
+   'cd /install_dir; ./logstash-server'
+fi
+
+# haproxy #1
+echo " +-----------------------------------------------+"
+echo " |  HAPROXY #1                                   |"
+echo " +-----------------------------------------------+"
+echo "     Server - $HAPROXY1IP                              "
+ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY1IP \
+'cd /install_dir; ./haproxy'
+
+# haproxy #2
+echo " +-----------------------------------------------+"
+echo " |  HAPROXY #2                                   |"
+echo " +-----------------------------------------------+"
+echo "     Server - $HAPROXY2IP                              "
+ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY2IP \
+'cd /install_dir; ./haproxy'
+
+sleep 30
+
+# controller
+declare -a arr1=(`cat variables \
+| grep ^CONTRL[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo " +-----------------------------------------------+"
+   echo " |  CONTROLLER                                   |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'cd /install_dir; ./controller'
+done
+
+# swift
+declare -a arr1=(`cat variables \
+| grep ^STORAGE[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo " +-----------------------------------------------+"
+   echo " |  SWIFT                                        |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'cd /install_dir; ./storage'
+done
+
+# nova
+declare -a arr1=(`cat variables \
+| grep ^COMPUTE[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo " +-----------------------------------------------+"
+   echo " |  NOVA                                         |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'cd /install_dir; ./compute'
+done
+
+# neutron
+declare -a arr1=(`cat variables \
+| grep ^NETWORK[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo " +-----------------------------------------------+"
+   echo " |  NEUTRON                                      |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'cd /install_dir; ./network'
+done
+
+# service restart
+echo " +-----------------------------------------------+"
+echo " |  RESTART SERVICES                             |"
+echo " +-----------------------------------------------+"
+declare -a arr1=(`cat variables \
+| grep ^CONTRL[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'systemctl restart memcached.service; systemctl restart httpd.service'
+done
+
+sleep 5
+
+# build ring
+echo " +-----------------------------------------------+"
+echo " |  BUILD RINGS                                  |"
+echo " +-----------------------------------------------+"
+echo "     Server - $STORAGE1IP                         "
+ssh -i ssh-key -o StrictHostKeyChecking=no root@$STORAGE1IP \
+'cd /install_dir; ./build-ring'
+source admin-openrc.sh
+nova image-list
+
+sleep 5
+
+# tunnel subnet
+echo " +-----------------------------------------------+"
+echo " |  TUNNEL SUBNET                                |"
+echo " +-----------------------------------------------+"
+echo "     Server - $CONTRL1IP                          "
+ssh -i ssh-key -o StrictHostKeyChecking=no root@$CONTRL1IP \
+'cd /install_dir; ./tunnel-subnet '
+
+sleep 5
+
+# VLAN subnet
+echo " +-----------------------------------------------+"
+echo " |  VLAN SUBNET                                  |"
+echo " +-----------------------------------------------+"
+echo "     Server - $CONTRL1IP                          "
+ssh -i ssh-key -o StrictHostKeyChecking=no root@$CONTRL1IP \
+'cd /install_dir; ./vlan-subnet'
+
+# backup
+if [ x$ENABLE_AMANDA == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  BACKUP                                       |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $BCKUPSERVER                        "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$BCKUPSERVER \
+   'cd /install_dir; ./amanda-server'
+fi
+
+# monitoring
+if [ x$ENABLE_NAGIOS == xTrue ]; then
+   echo " +-----------------------------------------------+"
+   echo " |  MONITORING                                   |"
+   echo " +-----------------------------------------------+"
+   echo "     Server - $NAGIOSSERVER                       "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$NAGIOSSERVER \
+   'cd /install_dir; ./nagios-server'
+fi
+
+# service restart
+echo " +-----------------------------------------------+"
+echo " |  RESTART SERVICES                             |"
+echo " +-----------------------------------------------+"
+declare -a arr1=(`cat variables \
+| grep ^CONTRL[0-9]IP | cut -f2 -d=`)
+for i in ${arr1[@]}; do
+   echo "     Server - $i                                  "
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'systemctl restart memcached.service; systemctl restart httpd.service'
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'systemctl restart openstack-nova-api; systemctl restart openstack-nova-scheduler'
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+   'systemctl restart openstack-nova-conductor'
+done
+
+sleep 5
+
+# +------------------------------------------+
+# | CLEAN UP                                 |
+# +------------------------------------------+
+if [ $DEBUG != True ]; then
+   # dns
+   if [ x$ENABLE_DNS == xTrue ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$DNSSERVERIP \
+      'cd /install_dir; rm -rf dns* patch* clam*; chmod 500 *'
+   fi
+
+   # ldap
+   if [ x$ENABLE_LDAP == xTrue ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$DNSSERVERIP \
+      'cd /install_dir; rm -rf ldap* patch* clam*; chmod 500 *'
+   fi
+
+   # squid
+   if [ x$ENABLE_SQUID == xTrue ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$SQUIDDSERVERIP \
+      'cd /install_dir; rm -rf squid* patch* clam*; chmod 500 *'
+   fi
+
+   # haproxy
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY1IP \
+   'cd /install_dir; rm -rf haproxy* ldap* patch* clam*; chmod 500 *'
+   ssh -i ssh-key -o StrictHostKeyChecking=no root@$HAPROXY2IP \
+   'cd /install_dir; rm -rf haproxy* ldap* patch* clam*; chmod 500 *'
+
+   # controller
+   declare -a arr1=(`cat variables \
+   | grep ^CONTRL[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+     ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+     'cd /install_dir; rm -rf controller* ldap* patch* clam* *-subnet; chmod 500 *'
+   done
+
+   # storage
+   declare -a arr1=(`cat variables \
+   | grep ^STORAGE[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; rm -rf cirros* ldap* patch* clam* storage build-ring; chmod 500 *'
+   done
+
+   # compute
+   declare -a arr1=(`cat variables \
+   | grep ^COMPUTE[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; rm -rf compute lvm* scale* block* ldap* patch* clam* create-volume* add-gluster; chmod 500 *'
+   done
+
+   # network
+   declare -a arr1=(`cat variables \
+   | grep ^NETWORK[0-9]IP | cut -f2 -d=`)
+   for i in ${arr1[@]}; do
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$i \
+      'cd /install_dir; rm -rf network ldap* patch* clam* create-volume*; chmod 500 *'
+   done
+
+   # amanda
+   if [ x$ENABLE_AMANDA == xTrue ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$BCKUPSERVER \
+      'cd /install_dir; rm -rf amanda* ldap* patch* clam*; chmod 500 *'
+   fi
+
+   # nagios
+   if [ x$ENABLE_NAGIOS == xTrue ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$NAGIOSSERVER \
+      'cd /install_dir; rm -rf nagios* ldap* patch* clam*; chmod 500 *'
+   fi
+
+   # logstash
+   if [ x$ENABLE_LOGSTASH == xTruexxx ]; then
+      ssh -i ssh-key -o StrictHostKeyChecking=no root@$LOGSTASHIP \
+      'cd /install_dir; rm -rf dns* patch* clam* logstash*; chmod 500 *'
+   fi
+
+   rm -f variables install-hopper
+fi
+
+# +------------------------------------------+
+# | DISPLAY                                  |
+# +------------------------------------------+
+clear
+echo
+figlet "     Hopper-Stack"
+figlet "                 Services"
+echo
+echo " +--------------------------------------------------------------------+"
+echo " | MariaDB                                                            |"
+echo " +--------------------------------------------------------------------+"
+echo "  <username>       |  root"
+echo "  <password>       |  $SQLPASS"
+echo " +--------------------------------------------------------------------+"
+echo
+
+if [ x$ENABLE_AMANDA == xTrue ]; then
+echo " +--------------------------------------------------------------------+"
+echo " | AMANDA BACKUP                                                      |"
+echo " +--------------------------------------------------------------------+"
+echo "  <check>          |  su - amandabackup -c \"amcheck -c Hopper-backup\""
+echo "  <backup>         |  su - amandabackup -c \"amdump Hopper-backup\""
+echo "  <recover>        |  amrecover Hopper-backup -s $BCKUPSERVER"
+echo " +--------------------------------------------------------------------+"
+echo
+fi
+
+if [ x$ENABLE_LDAP == xTrue ]; then
+echo " +--------------------------------------------------------------------+"
+echo " | OpenLDAP                                                           |"
+echo " +--------------------------------------------------------------------+"
+echo "  <username>       |  hsadmin"
+echo "  <password>       |  $LDAP_PASS"
+echo " +--------------------------------------------------------------------+"
+echo
+fi
+
+if [ x$ENABLE_NAGIOS == xTrue ]; then
+echo " +--------------------------------------------------------------------+"
+echo " |  NAGIOS                                                            |"
+echo " +--------------------------------------------------------------------+"
+echo "  <url>            |  http://$NAGIOSSERVER/nagios"
+echo "  <username>       |  nagiosadmin"
+echo "  <password>       |  $NAGIOS_PASS"
+echo " +--------------------------------------------------------------------+"
+echo
+fi
+
+if [ x$ENABLE_LOGSTASH == xTrue ]; then
+echo " +--------------------------------------------------------------------+"
+echo " |  LOGSTASH                                                          |"
+echo " +--------------------------------------------------------------------+"
+echo "  <url>              |  http://$LOGSTASHIP"
+echo "  <Kibana username>  |  kibanaadmin"
+echo "  <Kibana password>  |  $KBPASS"
+echo " +--------------------------------------------------------------------+"
+echo
+fi
+
+echo " +--------------------------------------------------------------------+"
+echo " |  HORIZON                                                           |"
+echo " +--------------------------------------------------------------------+"
+echo "  <url>            |  http://$VIPSERVXIP/dashboard"
+echo "  <Admin login>    |  admin:$ADMIN_PASS"
+echo "  <Project login>  |  $PROJECT:$USRPASS"
+echo " +--------------------------------------------------------------------+"
+echo
+
+echo
+figlet "     Hopper-Stack"
+echo
+echo "                                      Copyright (C) 2015 Hopper~Stack"
+echo
+echo
+

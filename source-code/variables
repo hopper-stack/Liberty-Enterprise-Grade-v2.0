@@ -1,0 +1,567 @@
+# +------------------------------------------------------------------+
+# | STATIC                                                           |
+# +------------------------------------------------------------------+
+# | Do not alter these values                                        | 
+# +------------------------------------------------------------------+
+VERSION=v1.0
+RELEASE=liberty
+STACKNAME=hopper-stack
+
+# +------------------------------------------------------------------+
+# | REPOSITORY SERVER                                                |
+# +------------------------------------------------------------------+
+# | FILESERVER : Local repository server                             |
+# | HTTPFILES  : HTTP directory where additional files are foun      |
+# | EPEL       : EPEL releas                                         |
+# | HTTPEPEL   : Internet EPEL releas                                |
+# +------------------------------------------------------------------+
+FILESERVER=192.168.1.31
+HTTPFILES=hopper-downloads
+EPEL=http://192.168.1.31/CentOS/7/0/epel/e/epel-release-7-5.noarch.rpm
+HTTPEPEL=http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+
+# +------------------------------------------------------------------+
+# | PASSWORDS                                                        |
+# +------------------------------------------------------------------+
+# | ADMIN_PASS  : Admin  login password for user admin on Horizon    |
+# | SERVICE_PASS : Generic service password for ALL services         |
+# | RABBIT_PASS  : Rabbit password for all services                  |
+# | META_PASS : MetaData password for shared proxy services          |
+# | ADMIN_TOKEN : Admin temporary token                              |
+# | CLUSTER_NAME : MariaDB cluster name                              |
+# | SQLPASS: Database password                                       |
+# | SECRET_PASS Secret MariaDB password                              |
+# +------------------------------------------------------------------+
+ADMIN_PASS=adminpass
+SERVICE_PASS=servicepass
+RABBIT_PASS=rabbitpass
+META_PASS=metapass
+ADMIN_TOKEN=admintoken
+CLUSTER_NAME="Hopper_Stack"
+SQLPASS="mysqlpass"
+SECRET_PASS="secretpass"
+
+# +------------------------------------------------------------------+
+# | EMAIL                                                            |
+# +------------------------------------------------------------------+
+# | EMAIL : Administrator account                                    |
+# +------------------------------------------------------------------+
+EMAIL=changeme@changeme.com
+
+# +------------------------------------------------------------------+
+# | HYPERVISOR                                                       |
+# +------------------------------------------------------------------+
+# | Option : qemu/kvm                                                |
+# +------------------------------------------------------------------+
+HYPERVISOR=qemu
+
+# +------------------------------------------------------------------+
+# | INITAL TENANT                                                    |
+# +------------------------------------------------------------------+
+# | PROJECT      : Tenant name and first account name                |
+# | USRPASS      : Tenant first account password                     |
+# | MAXINSTANCES : Maxmimum number of allowed instances              |
+# | MAXCORES     : Maxmimum number of allocated vCPU cores           |
+# | MAXRAM       : Maxmimum number of allocated RAM                  |
+# | MAXSTORAGE   : Maxmimum number of allowed storage                |
+# | MAXSNAPSHOTS : Maxmimum number of allowed snapshots              |
+# | MAXFLOATIPS  : Maxmimum number of floating IP addresses          |
+# +------------------------------------------------------------------+
+PROJECT=demo
+USRPASS=demo
+MAXINSTANCES=100
+MAXCORES=40
+MAXRAM=30720
+MAXVOLUMES=100
+MAXSTORAGE=500
+MAXSNAPSHOTS=20
+MAXFLOATIPS=25
+
+# +------------------------------------------------------------------+
+# | NETWORK HIGH AVAILABILITY - not implemented yet                  |
+# +------------------------------------------------------------------+
+# | 1 - Layer-3 HA                                                   |
+# | 2 - Distributed Virtual Routing                                  |
+# | L3_HA=1                                                          |
+# +------------------------------------------------------------------+
+
+# +------------------------------------------------------------------+
+# | TENANT OVERLAY TECHNOLOGY                                        |
+# +------------------------------------------------------------------+
+# | 1 - GRE Tunnels                                                  |
+# | 2 - VxLAN Tunnel                                                 |
+# +------------------------------------------------------------------+
+TUNNELTYPE=2
+
+# +------------------------------------------------------------------+
+# | VM MANAGEMENT VLAN DETAILS                                       |
+# +------------------------------------------------------------------+
+# | MGTVLAN     : Enable VLAN True/False                             |
+# | MGTRANGE    : VLAN Range                                         |
+# | MGTPROJVLAN : First account VLAN ID                              |
+# | MGTPROJGW   : VLAN access VLAN gateway                           |
+# +------------------------------------------------------------------+
+MGTVLAN=True
+MGTRANGE=2000-2100
+MGTPROJVLAN=2001
+MGTPROJGW=192.168.4.1
+
+# +------------------------------------------------------------------+
+# | MANAGEMENT VLAN EXTERNAL NICs                                    |
+# +------------------------------------------------------------------+
+# | COMPPROJNIC : Compute management VLAN NIC                        |
+# | NETWIROJNIC : Network management VLAN NIC                        |
+# +------------------------------------------------------------------+
+COMPPROJNIC=eth3
+NETWIROJNIC=eth3
+
+# +------------------------------------------------------------------+
+# | FIREWALL AS A SERVICE                                            |
+# +------------------------------------------------------------------+
+# | FWAAS : Enable FWaaS True/False                                  |
+# +------------------------------------------------------------------+
+FWAAS=True
+
+# +------------------------------------------------------------------+
+# | LOLAD-BALANCER AS A SERVICE                                      |
+# +------------------------------------------------------------------+
+# | LBAAS : Enable LBAAS True/False                                  |
+# +------------------------------------------------------------------+
+LBAAS=True
+
+# +------------------------------------------------------------------+
+# | CEILOMETER                                                       |
+# +------------------------------------------------------------------+
+# | CEILOMETER : Enable CEILOMETER True/False                        |
+# +------------------------------------------------------------------+
+CEILOMETER=True
+
+# +------------------------------------------------------------------+
+# | VIRTUAL IP ADDRESS                                               |
+# +------------------------------------------------------------------+
+# | VIPSERVXIP : Virtual IP                                          |
+# | VIPSERVXHN : Virtual hostname                                    |
+# | VIPSERVXIF : Virtual IP interface                                |
+# +------------------------------------------------------------------+
+VIPSERVXIP=192.168.1.40
+VIPSERVXHN=floatingip
+VIPSERVXIF=eth0
+
+# +------------------------------------------------------------------+
+# | HAPROXY #1                                                       |
+# +------------------------------------------------------------------+
+# | HAPROXY1IP : IP address                                          |
+# | HAPROXY1HN : Hostname                                            |
+# | BACKUPLAN  : Backup VLAN & Directories                           |
+# +------------------------------------------------------------------+
+HAPROXY1IP=192.168.1.41
+HAPROXY1HN=haproxy1
+BACKUPLAN=192.168.1.41:/etc
+
+# +------------------------------------------------------------------+
+# | HAPROXY #2                                                       |
+# +------------------------------------------------------------------+
+# | HAPROXY2IP : IP address                                          |
+# | HAPROXY2HN : Hostname                                            |
+# | BACKUPLAN  : Backup VLAN & Directories                           |
+# +------------------------------------------------------------------+
+HAPROXY2IP=192.168.1.42
+HAPROXY2HN=haproxy2
+BACKUPLAN=192.168.1.42:/etc
+
+# +------------------------------------------------------------------+
+# | CONTROLLER #1                                                    |
+# +------------------------------------------------------------------+
+# | CONTRL1IP  : IP address                                          |
+# | CONTRL1HN  : Hostname                                            |
+# | BACKUPLAN  : Backup VLAN & Directories                           |
+# | CONTRL1SQL : MariaDB non-routed VLAN                             |
+# +------------------------------------------------------------------+
+CONTRL1IP=192.168.1.51
+CONTRL1HN=controller1
+BACKUPLAN=192.168.1.51:/etc,/var/log/mariadb-backup
+CONTRL1SQL=192.168.9.51
+
+# +------------------------------------------------------------------+
+# | CONTROLLER #2                                                    |
+# +------------------------------------------------------------------+
+# | CONTRL2IP  : IP address                                          |
+# | CONTRL2HN  : Hostname                                            |
+# | BACKUPLAN  : Backup VLAN & Directories                           |
+# | CONTRL2SQL : MariaDB non-routed VLAN                             |
+# +------------------------------------------------------------------+
+CONTRL2IP=192.168.1.52
+CONTRL2HN=controller2
+BACKUPLAN=192.168.1.52:/etc,/var/log/mariadb-backup
+CONTRL2SQL=192.168.9.52
+
+# +------------------------------------------------------------------+
+# | CONTROLLER #3                                                    |
+# +------------------------------------------------------------------+
+# | CONTRL3IP  : IP address                                          |
+# | CONTRL3HN  : Hostname                                            |
+# | BACKUPLAN  : Backup VLAN & Directories                           |
+# | CONTRL3SQL : MariaDB non-routed VLAN                             |
+# +------------------------------------------------------------------+
+CONTRL3IP=192.168.1.53
+CONTRL3HN=controller3
+BACKUPLAN=192.168.1.53:/etc,/var/log/mariadb-backup
+CONTRL3SQL=192.168.9.53
+
+# +------------------------------------------------------------------+
+# | NEUTRON #1                                                       |
+# +------------------------------------------------------------------+
+# | NETWORK1IP     : IP address                                      |
+# | NETWORK1HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | NETWORKTUN1IP  : Tunnel IP address                               |
+# | NETWORKEXT1IP  : External IP address (not configured)            |
+# | NETWORK1EXTNET : External network NIC                            |
+# +------------------------------------------------------------------+
+NETWORK1IP=192.168.1.61
+NETWORK1HN=network1
+BACKUPLAN=192.168.1.61:/etc/neutron
+NETWORKTUN1IP=192.168.5.61
+NETWORKEXT1IP=192.168.6.61
+NETWORK1EXTNET=eth2
+
+# +------------------------------------------------------------------+
+# | NEUTRON #2                                                       |
+# +------------------------------------------------------------------+
+# | NETWORK2IP     : IP address                                      |
+# | NETWORK2HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | NETWORKTUN2IP  : Tunnel IP address                               |
+# | NETWORKEXT2IP  : External IP address (not configured)            |
+# | NETWORK2EXTNET : External network NIC                            |
+# +------------------------------------------------------------------+
+NETWORK2IP=192.168.1.62
+NETWORK2HN=network2
+BACKUPLAN=192.168.1.62:/etc/neutron
+NETWORKTUN2IP=192.168.5.62
+NETWORKEXT2IP=192.168.6.62
+NETWORK2EXTNET=eth2
+
+# +------------------------------------------------------------------+
+# | NEUTRON #3                                                       |
+# +------------------------------------------------------------------+
+# | NETWORK3IP     : IP address                                      |
+# | NETWORK3HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | NETWORKTUN3IP  : Tunnel IP address                               |
+# | NETWORKEXT3IP  : External IP address (not configured)            |
+# | NETWORK3EXTNET : External network NIC                            |
+# +------------------------------------------------------------------+
+NETWORK3IP=192.168.1.63
+NETWORK3HN=network3
+BACKUPLAN=192.168.1.63:/etc/neutron
+NETWORKTUN3IP=192.168.5.63
+NETWORKEXT3IP=192.168.6.63
+NETWORK3EXTNET=eth2
+
+# +------------------------------------------------------------------+
+# | EXTERNAL NETWORK DETAILS                                         |
+# +------------------------------------------------------------------+
+# | NETWORKEXTGW   : External network gateway                        |
+# | NETWORKWEXTRNG : External network available IP range             |
+# +------------------------------------------------------------------+
+NETWORKEXTGW=192.168.6.1
+NETWORKWEXTRNG=200-250
+ 
+# +------------------------------------------------------------------+
+# | SWIFT #1                                                         |
+# +------------------------------------------------------------------+
+# | STORAGE1IP    : IP address                                       |
+# | STORAGE1HN    : Hostname                                         |
+# | BACKUPLAN     : Backup VLAN & Directories                        |
+# | STORAGEINT1IP : Rsync non-routed network                         |
+# +------------------------------------------------------------------+
+STORAGE1IP=192.168.1.71
+STORAGE1HN=storage1
+BACKUPLAN=192.168.1.71:/etc/swift
+STORAGEINT1IP=192.168.7.71
+
+# +------------------------------------------------------------------+
+# | SWIFT #2                                                         |
+# +------------------------------------------------------------------+
+# | STORAGE2IP    : IP address                                       |
+# | STORAGE2HN    : Hostname                                         |
+# | BACKUPLAN     : Backup VLAN & Directories                        |
+# | STORAGEINT2IP : Rsync non-routed network                         |
+# +------------------------------------------------------------------+
+STORAGE2IP=192.168.1.72
+STORAGE2HN=storage2
+BACKUPLAN=192.168.1.72:/etc/swift
+STORAGEINT2IP=192.168.7.72
+
+# +------------------------------------------------------------------+
+# | SWIFT #3                                                         |
+# +------------------------------------------------------------------+
+# | STORAGE3IP    : IP address                                       |
+# | STORAGE3HN    : Hostname                                         |
+# | BACKUPLAN     : Backup VLAN & Directories                        |
+# | STORAGEINT3IP : Rsync non-routed network                         |
+# +------------------------------------------------------------------+
+STORAGE3IP=192.168.1.73
+STORAGE3HN=storage3
+BACKUPLAN=192.168.1.73:/etc/swift
+STORAGEINT3IP=192.168.7.73
+
+# +------------------------------------------------------------------+
+# | NOVA #1                                                          |
+# +------------------------------------------------------------------+
+# | COMPUTE1IP     : IP address                                      |
+# | COMPUTE1HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | COMPTUN1IP     : Tunnel IP address                               |
+# | COMPSTORAGE1IP : Storage Network IP address (Gluster only)       |
+# +------------------------------------------------------------------+
+COMPUTE1IP=192.168.1.81
+COMPUTE1HN=compute1
+BACKUPLAN=192.168.1.81:/etc/nova,/etc/cinder
+COMPTUN1IP=192.168.5.81
+COMPSTORAGE1IP=192.168.8.81
+
+# +------------------------------------------------------------------+
+# | NOVA #2                                                          |
+# +------------------------------------------------------------------+
+# | COMPUTE2IP     : IP address                                      |
+# | COMPUTE2HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | COMPTUN2IP     : Tunnel IP address                               |
+# | COMPSTORAGE2IP : Storage Network IP address (Gluster only)       |
+# +------------------------------------------------------------------+
+COMPUTE2IP=192.168.1.82
+COMPUTE2HN=compute2
+BACKUPLAN=192.168.1.82:/etc/nova,/etc/cinder
+COMPTUN2IP=192.168.5.82
+COMPSTORAGE2IP=192.168.8.82
+
+# +------------------------------------------------------------------+
+# | NOVA #3                                                          |
+# +------------------------------------------------------------------+
+# | COMPUTE3IP     : IP address                                      |
+# | COMPUTE3HN     : Hostname                                        |
+# | BACKUPLAN      : Backup VLAN & Directories                       |
+# | COMPTUN3IP     : Tunnel IP address                               |
+# | COMPSTORAGE3IP : Storage Network IP address (Gluster only)       |
+# +------------------------------------------------------------------+
+COMPUTE3IP=192.168.1.83
+COMPUTE3HN=compute3
+BACKUPLAN=192.168.1.83:/etc/nova,/etc/cinder
+COMPTUN3IP=192.168.5.83
+COMPSTORAGE3IP=192.168.8.83
+
+# +------------------------------------------------------------------+
+# | SWIFT STORAGE DISKS                                              |
+# +------------------------------------------------------------------+
+# | Repeat the line and change disk for more disks per node          |
+# |                                                                  |
+# |        Strg IP    Replctn    Disk                                |
+# +------------------------------------------------------------------+
+SWIFT_DISK=STORAGE1IP:STORAGEINT1IP:vdb
+SWIFT_DISK=STORAGE1IP:STORAGEINT1IP:vdc
+SWIFT_DISK=STORAGE1IP:STORAGEINT1IP:vdd
+SWIFT_DISK=STORAGE2IP:STORAGEINT2IP:vdb
+SWIFT_DISK=STORAGE2IP:STORAGEINT2IP:vdc
+SWIFT_DISK=STORAGE2IP:STORAGEINT2IP:vdd
+SWIFT_DISK=STORAGE3IP:STORAGEINT3IP:vdb
+SWIFT_DISK=STORAGE3IP:STORAGEINT3IP:vdc
+SWIFT_DISK=STORAGE3IP:STORAGEINT3IP:vdd
+
+# +------------------------------------------------------------------+
+# | CINDER SHREDDING                                                 |
+# +------------------------------------------------------------------+
+# | none  - instant deletion of volumes                              |
+# | zero  - deletion of volumes by zeroing                           |
+# | shred - deletion of volumes by zeroing in 3x using linux shred   |
+# +------------------------------------------------------------------+
+CINDER_DELETE=none
+
+# +------------------------------------------------------------------+
+# | LVM iSCSI CINDER STORAGE                                         |
+# +------------------------------------------------------------------+
+# | ENABLE_LVM : LVM/iSCSI True/False                                |
+ENABLE_LVM=True
+# |                                                                  |
+# | Add more disk by comma separation e.g. /dev/sdb,/dev/sdc         |
+# |                                                                  |
+# |        Compute IP  Disk(s)                                       |
+# +------------------------------------------------------------------+
+LVM1_DISK=$COMPUTE1IP:/dev/vdb,/dev/vdc,/dev/vdd
+LVM2_DISK=$COMPUTE2IP:/dev/vdb,/dev/vdc,/dev/vdd
+LVM3_DISK=$COMPUTE3IP:/dev/vdb,/dev/vdc,/dev/vdd
+
+# +------------------------------------------------------------------+
+# | BLOCK CINDER STORAGE                                             |
+# +------------------------------------------------------------------+
+# | ENABLE_BLOCK : Block True/False                                  |
+ENABLE_BLOCK=False
+# |                                                                  |
+# | Add more disk by comma separation e.g. /dev/sdb,/dev/sdc         |
+# |                                                                  |
+# |         Compute IP   Disk(s)                                     |
+# +------------------------------------------------------------------+
+BLOCK1_DISK=$COMPUTE1IP:/dev/vdb,/dev/vdc,/dev/vdd
+BLOCK2_DISK=$COMPUTE2IP:/dev/vdb,/dev/vdc,/dev/vdd
+BLOCK3_DISK=$COMPUTE3IP:/dev/vdb,/dev/vdc,/dev/vdd
+
+# +------------------------------------------------------------------+
+# | GLUSTER CINDER STORAGE                                           |
+# +------------------------------------------------------------------+
+# | Cinder storage is contributed from local disk on compute nodes   |
+# | there should be a one-to-one mapping between GLUSTER nodes and   |
+# | compute nodes                                                    |
+# |                                                                  |
+# | ENABLE_GLUSTER     : Gluster True/False                          |
+# | FIRST_GLUSTER_NODE : First Gluster node                          |
+# | OTHER_GLUSTER_NODE : Additonal Gluster node (2nd compute node)   |
+# | OTHER_GLUSTER_NODE : Additonal Gluster node (3rd copute node)... |
+# | CINDER_VOL         : Cinder volume name                          |
+# | GLUSTER_DIR        : Local mount directory for Gluster           |
+# | NETPING            : Default ping alive check                    |
+ENABLE_GLUSTER=False
+FIRST_GLUSTER_NODE=$COMPSTORAGE1IP
+OTHER_GLUSTER_NODE=$COMPSTORAGE2IP
+OTHER_GLUSTER_NODE=$COMPSTORAGE3IP
+CINDER_VOL=cindervol01
+GLUSTER_DIR=/data
+NETPING=42
+# |                                                                  |
+# | Add more disk by repeating the 3 servers and changing the disk   |
+# | NOTE repeating is essential to keep the mirroring in order       |
+# +------------------------------------------------------------------+
+GLUSTER1_DISK=$COMPSTORAGE1IP:vdb
+GLUSTER2_DISK=$COMPSTORAGE2IP:vdb
+GLUSTER3_DISK=$COMPSTORAGE3IP:vdb
+GLUSTER4_DISK=$COMPSTORAGE1IP:vdc
+GLUSTER5_DISK=$COMPSTORAGE2IP:vdc
+GLUSTER6_DISK=$COMPSTORAGE3IP:vdc
+GLUSTER7_DISK=$COMPSTORAGE1IP:vdd
+GLUSTER8_DISK=$COMPSTORAGE2IP:vdd
+GLUSTER9_DISK=$COMPSTORAGE3IP:vdd
+
+# +------------------------------------------------------------------+
+# | INSTANCE FLAVOR DEFAULTS                                         |
+# +------------------------------------------------------------------+
+FLAVOR="a1.tiny   05 1024   1 1"
+FLAVOR="a2.tiny   06 1024   5 1"
+
+FLAVOR="s1.small  10 1024  40 1"
+FLAVOR="s2.small  11 2048  40 1"
+
+FLAVOR="m1.medium 20 4096  40 2"
+FLAVOR="m2.medium 21 8192  80 4"
+
+FLAVOR="c3.large  50 4096  40 4"
+FLAVOR="c4.xlarge 51 8192  80 8"
+
+FLAVOR="m3.large  60 8192  40 2"
+FLAVOR="m4.xlarge 61 16384 80 4"
+
+# +------------------------------------------------------------------+
+# | NETWORK TIME PROTOCOL                                            |
+# +------------------------------------------------------------------+
+# | None       - install but do not configure                        |
+# | HAPROXY    - Use haproxy1 which will be configured automatically |
+# | IP address - Use a known stratum NTP server (recommended)        |
+# +------------------------------------------------------------------+
+NTPSERVER=192.168.1.250
+
+# +------------------------------------------------------------------+
+# | AMANDA BACKUP                                                    |
+# +------------------------------------------------------------------+
+# | ENABLE_AMANDA : Backup True/False                                |
+# | BCKUPSERVER   : Backup server                                    |
+# | BACKUPFOLDER  : Disk based backup directory                      |
+# | HOLDINGFOLDER : Temporary holding directory                      |
+# +------------------------------------------------------------------+
+ENABLE_AMANDA=True
+BCKUPSERVER=192.168.1.33
+BACKUPFOLDER=/central_backup
+HOLDINGFOLDER=/holding
+
+# +------------------------------------------------------------------+
+# | NAGIOS MONITORING                                                |
+# +------------------------------------------------------------------+
+# | ENABLE_NAGIOS : Monitoring True/False                            |
+# | NAGIOS_PASS   : nagiosadmin password                             |
+# | NAGIOSSERVER  : Nagios server                                    |
+# +------------------------------------------------------------------+
+ENABLE_NAGIOS=True
+NAGIOS_PASS=r00t
+NAGIOSSERVER=192.168.1.33
+
+# +------------------------------------------------------------------+
+# | DNS SERVICES                                                     |
+# +------------------------------------------------------------------+
+# | ENABLE_DNS  : DNS True/False                                     |
+# | DNSDOMAIN   : DNS domain                                         |
+# | DNSSERVERHN : DNS server hostname                                |
+# | DNSSERVERIP : DNS server IP address                              |
+# +------------------------------------------------------------------+
+ENABLE_DNS=True
+DNSDOMAIN=hopper-stack.co.uk
+DNSSERVERHN=infrasvr
+DNSSERVERIP=192.168.1.33
+
+# +------------------------------------------------------------------+
+# | SQUID PROXY SERVICES                                             |
+# +------------------------------------------------------------------+
+# | ENABLE_SQUID   : Squid Proxy True/False                          |
+# | SQUIDDSERVERHN : Squid server hostname                           |
+# | SQUIDDSERVERIP : Squid server internal IP address                |
+# | SQUIDPROXY     : Squid server external IP address                |
+# | SQUIDSUBNET    : Squid server allowed subnet                     |
+# +------------------------------------------------------------------+
+ENABLE_SQUID=True
+SQUIDDSERVERHN=squid
+SQUIDDSERVERIP=192.168.1.32
+SQUIDPROXY=192.168.6.32
+SQUIDSUBNET=192.168.0.0/24
+
+# +------------------------------------------------------------------+
+# | OPENLDAP DIRECTORY SERVICES                                      |
+# +------------------------------------------------------------------+
+# | ENABLE_LDAP : LDAP True/False                                    |
+# | LDAP_PASS   : LDAP generic password                              |
+# | LDAPSERVER  : Designated LDAP server                             |
+# |   *** always installed on the DNS server                         |
+# +------------------------------------------------------------------+
+ENABLE_LDAP=True
+LDAP_PASS=r00t
+LDAPSERVER=infrasvr
+
+# +------------------------------------------------------------------+
+# | CLAMAV ANTI-VIRUS                                                |
+# +------------------------------------------------------------------+
+# | ENABLE_CLAMAV : CLAMAV True/False                                |
+# +------------------------------------------------------------------+
+ENABLE_CLAMAV=True
+
+# +------------------------------------------------------------------+
+# | LOGSTASH                                                         |
+# +------------------------------------------------------------------+
+# | ENABLE_LOGSTASH : LOGSTASH True/False                            |
+# | KBPASS          : kibanaadmin password                           |
+# | LOGSTASHIP      : Logstash server                                |
+# | KEEPELKLOGS     : How many days to keep logs                     |
+# | REPORTSYSLOG    : Report syslog                                  |
+# | REMOVEHTTP200   : Reports HTTP 200 events                        |
+# | REPORTALLSWIFT  : Report All swift events (unfiltered)           |
+# | REPORTVALUES    : Report on these colon separated values         |
+# |                         CRITICAL:DEBUG:INFO:TRACE:WARNING:ERROR  |
+# |                                                                  |
+# |                   NOTE These values are switched off by default  |
+# |                   ````  INFO:DEBUG and SYSLOG                    |
+# +------------------------------------------------------------------+
+ENABLE_LOGSTASH=True
+KBUSER=kibanaadmin
+KBPASS=kbpassw0rd
+LOGSTASHIP=192.168.1.34
+KEEPELKLOGS=31
+REPORTSYSLOG=False
+REPORTHTTP200=False
+REPORTALLSWIFT=False
+REPORTVALUES=CRITICAL:TRACE:WARNING:ERROR
+

@@ -1,0 +1,249 @@
+#!/bin/bash
+
+:<<'hopper-stack-notice'
+
+Copyright 2015 Hopper-Stack
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+hopper-stack-notice
+
+# +------------------------------------------+
+# | VARIABLES                                |
+# +------------------------------------------+
+source profile
+source admin-openrc.sh
+
+echo "# +--------------------------------------+"
+echo "# | Rabbit Message Queue                 |"
+echo "# +--------------------------------------+"
+rabbitmqctl cluster_status
+echo
+
+echo "# +--------------------------------------+"
+echo "# | MySQL Database                       |"
+echo "# +--------------------------------------+"
+mysql -h ${VIP_ADDRESS} --port 3306 -u haproxy_root -p${SQLPASS} -e "show global status like 'wsrep_%'" | grep wsrep_incoming_addresses
+echo
+
+echo "# +--------------------------------------+"
+echo "# | MySQL Database                       |"
+echo "# +--------------------------------------+"
+ls /var/log/mariadb-backup
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Keystone Authentication              |"
+echo "# +--------------------------------------+"
+openstack user list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Cirros image                         |"
+echo "# +--------------------------------------+"
+nova image-list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | NOVA Status                          |"
+echo "# +--------------------------------------+"
+nova service-list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Neutron Status                       |"
+echo "# +--------------------------------------+"
+neutron agent-list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Cinder Status                        |"
+echo "# +--------------------------------------+"
+cinder service-list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Cinder Volume                        |"
+echo "# +--------------------------------------+"
+source $PROJECT-openrc.sh
+GLANCEID=`glance image-list | grep cirros | awk '{print $2}' | head -1`
+glance image-download $GLANCEID > /tmp/cirros.img
+rm -rf /tmp/cirros.img
+volname=demovol
+AZ=`nova availability-zone-list | grep available | awk '{print $2}' | head -1`
+cinder create --availability-zone $AZ --display-name $PROJECT-$volname 1
+sleep 5
+cinder list
+CV=`cinder list | grep $volname | head -1 | awk '{print $2}'`
+cinder delete $CV
+source admin-openrc.sh
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Checking Swift Status                |"
+echo "# +--------------------------------------+"
+source $PROJECT-openrc.sh
+cd /tmp
+date > swifttest.file
+file=swifttest.file
+cont=$PROJECT-container
+echo -n " Create $cont: "
+swift post $cont
+echo
+echo -n " Upload: "
+swift upload $cont $file
+echo -n " Download: "
+swift download $cont $file
+rm -rf $file
+echo -n " List container: "
+swift list
+echo -n " List object: "
+swift list $cont
+echo -n " Delete container: "
+swift delete $cont
+rm -f $file
+cd $installdir
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Glance Images                        |"
+echo "# +--------------------------------------+"
+source $PROJECT-openrc.sh
+glance image-list
+source admin-openrc.sh
+swift list
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Ceilometer Status                    |"
+echo "# +--------------------------------------+"
+if [ x$CEILOMETER == xTrue ]; then
+   source $PROJECT-openrc.sh
+   export OS_AUTH_URL=http://${VIP_ADDRESS}:35357/
+   unset OS_PROJECT_DOMAIN_ID OS_USER_DOMAIN_ID
+   ceilometer meter-list | head -10
+   source admin-openrc.sh
+   export OS_AUTH_URL=http://${VIP_ADDRESS}:35357/
+   unset OS_PROJECT_DOMAIN_ID OS_USER_DOMAIN_ID
+   GLANCEID=`glance image-list | grep cirros | awk '{print $2}' | head -1`
+   glance image-download $GLANCEID > /tmp/cirros.img
+   sleep 10
+   ceilometer statistics -m image.download -p 120
+   source admin-openrc.sh
+   export OS_AUTH_URL=http://${VIP_ADDRESS}:35357/
+   unset OS_PROJECT_DOMAIN_ID OS_USER_DOMAIN_ID
+fi
+echo
+
+echo "# +--------------------------------------+"
+echo "# | Heat Orchestration Check             |"
+echo "# +--------------------------------------+"
+file=/tmp/stack.yml
+flav=`nova flavor-list | grep [0-9] | awk '{print $4}' | head -1`
+extnet=`neutron net-list | grep ext-net | awk '{print $2}'`
+intnet=`neutron net-list | grep $PROJECT-net | awk '{print $2}'`
+intsubnet=`neutron subnet-list | grep $PROJECT-subnet | awk '{print $2}'`
+volsize=1
+
+echo "heat_template_version: 2013-05-23" > $file
+echo "description: Hopper Template" >> $file
+echo "parameters:" >> $file
+echo "  server_name:" >> $file
+echo "    type: string" >> $file
+echo "    description: hopper-server" >> $file
+echo "  image:" >> $file
+echo "    type: string" >> $file
+echo "    description: cirros name" >> $file
+echo "    default: cirros-0.3.4-x86_64" >> $file
+echo "  flavor:" >> $file
+echo "    type: string" >> $file
+echo "    description: Flavor" >> $file
+echo "    default: ${flav}" >> $file
+echo "    constraints:" >> $file
+echo "      - allowed_values: [${flav}]" >> $file
+echo "  public_net_id:" >> $file
+echo "    type: string" >> $file
+echo "    description: ID of the external network" >> $file
+echo "    default: ${extnet}" >> $file
+echo "  private_net_id:" >> $file
+echo "    type: string" >> $file
+echo "    description: ID of the internal network" >> $file
+echo "    default: ${intnet}" >> $file
+echo "  private_subnet_id:" >> $file
+echo "    type: string" >> $file
+echo "    description: ID of private sub network " >> $file
+echo "    default: ${intsubnet}" >> $file
+
+if [ x$ENABLE_BLOCK != xTrue ]; then
+   echo "  volume_size:" >> $file
+   echo "    type: number" >> $file
+   echo "    description: Size of the volume to be created." >> $file
+   echo "    default: ${volsize}" >> $file
+   echo "    constraints:" >> $file
+   echo "      - range: { min: 1, max: 1024 }" >> $file
+   echo "        description: must be between 1 and 1024 Gb." >> $file
+fi
+echo "" >> $file
+
+echo "resources:" >> $file
+echo "  server:" >> $file
+echo "    type: OS::Nova::Server" >> $file
+echo "    properties:" >> $file
+echo "      name: { get_param: server_name }" >> $file
+echo "      image: { get_param: image }" >> $file
+echo "      flavor: { get_param: flavor }" >> $file
+echo "      networks:" >> $file
+echo "        - port: { get_resource: server_port }" >> $file
+echo "" >> $file
+
+echo "  server_port:" >> $file
+echo "    type: OS::Neutron::Port" >> $file
+echo "    properties:" >> $file
+echo "      network_id: { get_param: private_net_id }" >> $file
+echo "      fixed_ips:" >> $file
+echo "        - subnet_id: { get_param: private_subnet_id }" >> $file
+echo "" >> $file
+
+echo "  server_floating_ip:" >> $file
+echo "    type: OS::Neutron::FloatingIP" >> $file
+echo "    properties:" >> $file
+echo "      floating_network_id: { get_param: public_net_id }" >> $file
+echo "      port_id: { get_resource: server_port }" >> $file
+echo "" >> $file
+
+if [ x$ENABLE_BLOCK != xTrue ]; then
+   echo "  cinder_volume:" >> $file
+   echo "    type: OS::Cinder::Volume" >> $file
+   echo "    properties:" >> $file
+   echo "      size: { get_param: volume_size }" >> $file
+   echo "  volume_attachment:" >> $file
+   echo "    type: OS::Cinder::VolumeAttachment" >> $file
+   echo "    properties:" >> $file
+   echo "      volume_id: { get_resource: cinder_volume }" >> $file
+   echo "      instance_uuid: { get_resource: server }" >> $file
+   echo "" >> $file
+fi
+
+echo "outputs:" >> $file
+echo "  server_private_ip:" >> $file
+echo "    description: IP address of server on private network" >> $file
+echo "    value: { get_attr: [ server, first_address ] }" >> $file
+echo "  server_public_ip:" >> $file
+echo "    description: Floating IP address of server on public network" >> $file
+echo "    value: { get_attr: [ server_floating_ip, floating_ip_address ] }" >> $file
+echo "" >> $file
+
+source $PROJECT-openrc.sh
+heat stack-create -f /tmp/stack.yml -P "server_name=hopper-server" HopperStack
+rm -rf /tmp/stack.yml
+
